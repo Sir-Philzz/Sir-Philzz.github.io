@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en" manifest="cache.appcache">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ViperClient</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin:0; padding:0; min-height:100%;
+    background:#020806;
+    color:#c9f5db;
+    font:15px/1.5 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    overflow-x:hidden;
+  }
+  /* ===== BACKGROUND FX ===== */
+  #bg { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;
+    background:
+      radial-gradient(900px 500px at 50% -10%, rgba(0,255,136,.14), transparent 60%),
+      radial-gradient(700px 500px at 85% 100%, rgba(0,204,102,.10), transparent 60%),
+      radial-gradient(700px 500px at 10% 100%, rgba(0,255,136,.08), transparent 60%),
+      linear-gradient(180deg, #03130b 0%, #020806 45%, #010503 100%);
+  }
+  #bg .grid {
+    position:absolute; inset:-50% -50%;
+    background-image:
+      linear-gradient(rgba(0,255,136,.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,.07) 1px, transparent 1px);
+    background-size:44px 44px;
+    transform: perspective(600px) rotateX(58deg) scale(1.4);
+    transform-origin:50% 30%;
+    animation: gridmove 9s linear infinite;
+    mask-image: linear-gradient(to bottom, transparent 20%, black 55%, transparent 92%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 20%, black 55%, transparent 92%);
+  }
+  @keyframes gridmove { from { background-position:0 0, 0 0; } to { background-position:0 44px, 0 0; } }
+  #bg .orb { position:absolute; border-radius:50%; opacity:.55; }
+  #bg .orb1 { width:520px; height:520px; left:-140px; top:-140px;
+    background: radial-gradient(circle, rgba(0,255,136,.22) 0%, transparent 65%); animation: float1 9s ease-in-out infinite; }
+  #bg .orb2 { width:620px; height:620px; right:-180px; bottom:-220px;
+    background: radial-gradient(circle, rgba(0,230,122,.16) 0%, transparent 65%); animation: float1 11s ease-in-out infinite reverse; }
+  @keyframes float1 { 0%,100% { transform:translateY(0); } 50% { transform:translateY(26px); } }
+  #bg .scan { position:absolute; inset:0;
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,.022) 0 1px, transparent 1px 4px); }
+  #bg .beam { position:absolute; left:0; right:0; height:120px; top:-140px;
+    background: linear-gradient(to bottom, transparent, rgba(0,255,136,.09), transparent);
+    animation: beamscan 5.5s linear infinite; }
+  @keyframes beamscan { to { transform:translateY(120vh); } }
+
+  /* ===== TOP BAR ===== */
+  #topline { position:fixed; top:0; left:0; right:0; height:3px; z-index:5;
+    background: linear-gradient(90deg, transparent, #00ff88 20%, #7cffb2 50%, #00ff88 80%, transparent);
+    background-size:200% 100%; animation: shimmer 2.8s linear infinite;
+    box-shadow:0 0 14px rgba(0,255,136,.8); }
+  @keyframes shimmer { from { background-position:200% 0; } to { background-position:-200% 0; } }
+  #brand {
+    position:relative; z-index:2;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 20px;
+    background: rgba(3,18,11,.86);
+    border-bottom:1px solid rgba(0,255,136,.22);
+    box-shadow:0 4px 28px rgba(0,0,0,.6), inset 0 1px 0 rgba(0,255,136,.12);
+  }
+  #brand .left { display:flex; align-items:center; gap:11px; }
+  #brand .mini { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    background: radial-gradient(circle at 30% 25%, #0a2e1c, #03130b);
+    border:1px solid rgba(0,255,136,.55);
+    box-shadow:0 0 16px rgba(0,255,136,.45), inset 0 0 12px rgba(0,255,136,.18); }
+  #brand .mini svg { width:22px; height:22px; display:block; filter: drop-shadow(0 0 6px rgba(0,255,136,.9)); }
+  #brand b { font-size:15px; font-weight:900; letter-spacing:.22em; color:#eafff3;
+    text-shadow:0 0 14px rgba(0,255,136,.65); }
+  #brand b em { font-style:normal; color:#00ff88; }
+  #brand .ver { font-size:10px; font-weight:800; letter-spacing:.12em; color:#03130b;
+    background:linear-gradient(180deg,#7cffb2,#00ff88); padding:4px 9px; border-radius:999px;
+    box-shadow:0 0 12px rgba(0,255,136,.7); }
+  #brand .right { display:flex; align-items:center; gap:8px; font-size:11px; letter-spacing:.16em; color:#7fd0a0; font-weight:700; }
+  #brand .dot { width:9px; height:9px; border-radius:50%; background:#00ff88;
+    box-shadow:0 0 10px #00ff88; animation: blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 0%,100% { opacity:1; transform:scale(1);} 50% { opacity:.45; transform:scale(.8);} }
+
+  /* ===== CARD ===== */
+  #wrap { position:relative; z-index:2; display:flex; flex-direction:column; align-items:center;
+    padding:38px 18px 30px; min-height: calc(100vh - 60px); }
+  .card {
+    position:relative; width:100%; max-width:590px; text-align:center;
+    background: linear-gradient(180deg, rgba(10,32,20,.96), rgba(4,16,10,.96));
+    border:1px solid rgba(0,255,136,.28); border-radius:20px;
+    padding:34px 30px 26px; overflow:hidden;
+    box-shadow:0 0 0 1px rgba(0,0,0,.6), 0 20px 70px rgba(0,0,0,.65), 0 0 44px rgba(0,255,136,.14), inset 0 1px 0 rgba(124,255,178,.18);
+  }
+  .card::before { content:""; position:absolute; top:0; left:10%; right:10%; height:1px;
+    background:linear-gradient(90deg, transparent, #00ff88, transparent);
+    box-shadow:0 0 12px rgba(0,255,136,.9); }
+  .card::after { content:"VIPER"; position:absolute; bottom:-18px; left:0; right:0; text-align:center;
+    font-size:86px; font-weight:900; letter-spacing:.18em; color:transparent;
+    -webkit-text-stroke:1px rgba(0,255,136,.07); pointer-events:none; }
+  .logo-wrap { position:relative; width:112px; height:112px; margin:0 auto 6px; }
+  .logo-ring { position:absolute; inset:0; border-radius:50%;
+    border:2px solid rgba(0,255,136,.18); }
+  .logo-ring.r2 { inset:9px; border-color:rgba(0,255,136,.32); border-top-color:#00ff88; border-right-color:transparent;
+    animation: spin 3.2s linear infinite; box-shadow:0 0 22px rgba(0,255,136,.18); }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .logo { position:absolute; inset:18px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background: radial-gradient(circle at 50% 30%, #0e3a22 0%, #04160c 62%, #020806 100%);
+    border:1px solid rgba(0,255,136,.55);
+    box-shadow:0 0 30px rgba(0,255,136,.35), inset 0 0 22px rgba(0,255,136,.18);
+    animation: logopulse 2.6s ease-in-out infinite; }
+  @keyframes logopulse { 0%,100% { box-shadow:0 0 22px rgba(0,255,136,.28), inset 0 0 18px rgba(0,255,136,.14);} 50% { box-shadow:0 0 42px rgba(0,255,136,.55), inset 0 0 26px rgba(0,255,136,.28);} }
+  .logo svg { width:56px; height:56px; filter: drop-shadow(0 0 10px rgba(0,255,136,.9)); }
+  .live { position:absolute; right:8px; bottom:8px; width:16px; height:16px; border-radius:50%;
+    background:#00ff88; border:3px solid #04160c; box-shadow:0 0 12px #00ff88; animation: blink 1.4s infinite; }
+
+  h1.title { margin:14px 0 2px; font-size:42px; font-weight:900; letter-spacing:.14em; line-height:1; color:#f0fff6;
+    text-shadow:0 0 22px rgba(0,255,136,.4); }
+  h1.title span { background:linear-gradient(180deg,#c8ffe2 0%, #00ff88 55%, #00b45f 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter: drop-shadow(0 0 12px rgba(0,255,136,.45)); }
+  .sub { font-size:11px; font-weight:800; letter-spacing:.32em; color:#00ff88; margin:6px 0 0;
+    text-shadow:0 0 10px rgba(0,255,136,.6); }
+  .sub2 { font-size:11px; letter-spacing:.12em; color:#6b8a77; margin-top:4px; }
+
+  #state {
+    display:inline-block; margin:20px auto 8px; padding:11px 22px; border-radius:999px;
+    font-size:14px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+    background:rgba(0,255,136,.10); border:1px solid rgba(0,255,136,.45); color:#7cffb2;
+    box-shadow:0 0 18px rgba(0,255,136,.22), inset 0 0 14px rgba(0,255,136,.08);
+    text-shadow:0 0 10px rgba(0,255,136,.5);
+    max-width:100%; animation: statepulse 2s ease-in-out infinite;
+  }
+  @keyframes statepulse { 0%,100% { box-shadow:0 0 14px rgba(0,255,136,.18);} 50% { box-shadow:0 0 28px rgba(0,255,136,.38);} }
+  #state.warn { background:rgba(255,209,102,.10); border-color:rgba(255,209,102,.6); color:#ffe9a8;
+    text-shadow:0 0 10px rgba(255,209,102,.6); box-shadow:0 0 20px rgba(255,209,102,.25); animation: warnflash 1s steps(2) infinite; }
+  @keyframes warnflash { 50% { box-shadow:0 0 32px rgba(255,209,102,.5);} }
+  #state.bad { background:rgba(255,80,80,.10); border-color:#ff6b6b; color:#ffb3b3;
+    text-shadow:0 0 10px rgba(255,80,80,.7); box-shadow:0 0 24px rgba(255,60,60,.35); }
+  #state.ok { background:rgba(0,255,136,.14); border-color:#00ff88; color:#d8ffe9; }
+
+  #det { font-size:13px; color:#8fb8a0; letter-spacing:.04em; margin:2px 0 0; }
+  #det b { color:#00ff88; font-weight:800; text-shadow:0 0 8px rgba(0,255,136,.5); }
+
+  .bar { height:8px; margin:18px 4px 10px; border-radius:999px; overflow:hidden; position:relative;
+    background:#06150d; border:1px solid rgba(0,255,136,.25); box-shadow:inset 0 1px 3px rgba(0,0,0,.8); }
+  #barfill { height:100%; width:30%; border-radius:999px;
+    background:linear-gradient(90deg, #00994d, #00ff88, #7cffb2);
+    box-shadow:0 0 14px rgba(0,255,136,.8);
+    animation: barslide 1.6s ease-in-out infinite; }
+  @keyframes barslide { 0% { margin-left:-30%; width:30%; } 50% { margin-left:35%; width:40%; } 100% { margin-left:100%; width:30%; } }
+  .bar.done #barfill { animation:none; margin-left:0 !important; width:100% !important; }
+
+  #cache { font:11px/1.5 Consolas, monospace; letter-spacing:.06em; color:#5f7a6a; min-height:16px; }
+  #cache.cacheok { color:#00ff88; text-shadow:0 0 8px rgba(0,255,136,.6); }
+
+  .stats { display:flex; gap:10px; margin:20px 0 4px; }
+  .stat { flex:1; background:rgba(0,255,136,.05); border:1px solid rgba(0,255,136,.18); border-radius:12px; padding:10px 6px; }
+  .stat .k { font-size:9px; font-weight:800; letter-spacing:.2em; color:#5f7a6a; }
+  .stat .v { font-size:13px; font-weight:800; letter-spacing:.06em; color:#d8ffe9; margin-top:3px; text-shadow:0 0 8px rgba(0,255,136,.35); }
+  .stat .v.green { color:#00ff88; }
+
+  .hint { margin-top:16px; font-size:12px; color:#6b8a77; letter-spacing:.04em; }
+  .hint b { display:inline-block; color:#03130b; background:linear-gradient(180deg,#7cffb2,#00ff88);
+    border-radius:6px; padding:1px 8px; font-weight:900; box-shadow:0 0 10px rgba(0,255,136,.5); }
+  .tap-pulse { animation: tappulse 1.2s ease-in-out infinite; border-color:#ffe9a8 !important; }
+  @keyframes tappulse { 50% { transform:scale(1.03); } }
+
+  .footer { margin-top:18px; font-size:11px; letter-spacing:.14em; color:#41584a; text-align:center; }
+  .footer span { color:#00cc6e; font-weight:700; }
+  #particles { position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.7; }
+  @media (max-width:520px) {
+    h1.title { font-size:32px; } .card { padding:26px 18px 20px; } #brand .right { display:none; }
+  }
+</style>
+</head>
+<body>
+<div id="topline"></div>
+<div id="bg"><div class="grid"></div><div class="orb orb1"></div><div class="orb orb2"></div><div class="beam"></div><div class="scan"></div></div>
+<canvas id="particles"></canvas>
+
+<div id="brand">
+  <div class="left">
+    <div class="mini">
+      <svg viewBox="0 0 100 100"><defs><linearGradient id="vg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8ffe2"/><stop offset=".5" stop-color="#00ff88"/><stop offset="1" stop-color="#00a95c"/></linearGradient></defs><path d="M8 16 L50 90 L92 16 L71 16 L50 60 L29 16 Z" fill="url(#vg1)"/><circle cx="34" cy="24" r="4" fill="#02130a"/><circle cx="66" cy="24" r="4" fill="#02130a"/><path d="M42 72 L50 90 L58 72 Z" fill="#00ff88" opacity=".9"/></svg>
+    </div>
+    <b>VIPER<em>CLIENT</em></b>
+    <span class="ver">GREEN</span>
+  </div>
+  <div class="right"><span class="dot"></span> SYSTEM ONLINE</div>
+</div>
+
+<div id="wrap">
+  <div class="card" id="card">
+    <div class="logo-wrap">
+      <div class="logo-ring"></div>
+      <div class="logo-ring r2"></div>
+      <div class="logo">
+        <svg viewBox="0 0 100 100"><defs><linearGradient id="vg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8ffe9"/><stop offset=".45" stop-color="#00ff88"/><stop offset="1" stop-color="#00994d"/></linearGradient></defs><path d="M8 16 L50 90 L92 16 L71 16 L50 60 L29 16 Z" fill="url(#vg2)"/><circle cx="34" cy="24" r="4.5" fill="#02130a"/><circle cx="66" cy="24" r="4.5" fill="#02130a"/><circle cx="35.5" cy="22.5" r="1.4" fill="#00ff88"/><circle cx="67.5" cy="22.5" r="1.4" fill="#00ff88"/><path d="M42 72 L50 90 L58 72 Z" fill="#00ff88" opacity=".95"/></svg>
+      </div>
+      <div class="live"></div>
+    </div>
+    <h1 class="title">VIPER<span>CLIENT</span></h1>
+    <div class="sub">PS4 JAILBREAK SUITE</div>
+    <div class="sub2">venom-grade payload loader &bull; optimized for 13.xx</div>
+    <div id="state">detecting firmware...</div>
+    <div id="det"></div>
+    <div class="bar" id="bar"><div id="barfill"></div></div>
+    <div id="cache"></div>
+    <div class="stats">
+      <div class="stat"><div class="k">SUPPORT</div><div class="v green">13.02 – 13.52</div></div>
+      <div class="stat"><div class="k">ENTRY</div><div class="v">jb.html</div></div>
+      <div class="stat"><div class="k">MODE</div><div class="v green">OFFLINE</div></div>
+    </div>
+    <div class="hint">Press <b>X</b> or tap the screen when prompted &bull; keep this host for offline use</div>
+  </div>
+  <div class="footer">VIPER<span>CLIENT</span> &bull; STRIKE FAST &bull; STAY GREEN</div>
+</div>
+
+<script>
+(function () {
+    var stateEl = document.getElementById("state");
+    var detEl = document.getElementById("det");
+    var cacheEl = document.getElementById("cache");
+    var bar = document.getElementById("bar");
+    var barfill = document.getElementById("barfill");
+    function setState(t, c) {
+      stateEl.textContent = t; stateEl.className = c || "";
+      // ViperClient status pulse for tap-to-continue prompts
+      var card = document.getElementById("card");
+      if (card) {
+        if (/press|tap|unsupported|ready|cached|failed|obsolete/i.test(t)) stateEl.classList.add("tap-pulse");
+        else stateEl.classList.remove("tap-pulse");
+      }
+      if (bar && /loading/i.test(t) && barfill) { barfill.style.width = "85%"; }
+    }
+    function setCache(t, ok) {
+      cacheEl.textContent = t; cacheEl.className = ok ? "cacheok" : "";
+      if (bar && barfill) {
+        var m = /(\d+)%/.exec(t || "");
+        if (m) { barfill.style.animation = "none"; barfill.style.marginLeft = "0"; barfill.style.width = m[1] + "%"; }
+        else if (ok) { bar.classList.add("done"); }
+        else { bar.classList.remove("done"); }
+      }
+    }
+    var params = new URLSearchParams(location.search);
+
+    // Firmwares this build has a MEASURED kernel table for. jb.js still runs its
+    // own kernel-table-present gate, so this is UX only -- an unlisted firmware
+    // can still be launched with a tap. KEEP IN SYNC with ps4_offsets.js: add a
+    // fwnum here in the SAME commit that fills that firmware's kernel RVAs.
+    // The PS4 reports its minor as two hex digits in the UA (13.52 -> minor 0x52).
+    var SUPPORTED = { 1302: 1, 1304: 1, 1350: 1, 1352: 1 }; // all measured on hardware
+
+    var key = null, fwnum = null;
+    var m = /PlayStation\s+4[\/ ](\d+)\.(\d+)/.exec(navigator.userAgent);
+    if (m) {
+        var ms = parseInt(m[2], 16).toString(16);
+        if (ms.length < 2) ms = "0" + ms;
+        key = m[1] + "." + ms;
+        fwnum = parseInt(m[1], 10) * 100 + parseInt(ms, 10);
+    }
+
+    var forced = params.get("force") === "1";
+    var supported = forced || (fwnum !== null && SUPPORTED[fwnum] === 1);
+    detEl.innerHTML = "firmware <b>" + (key || "unknown") + "</b>"
+        + (supported ? " &middot; <b>supported</b>"
+                     : " &middot; not in this build's kernel table");
+
+    var target = "jb.html" + location.search;
+    function go() { setState("loading jailbreak...", "warn"); location.replace(target); }
+
+    function waitForTap(msg, action) {
+        setState(msg, "warn");
+        function fire() {
+            window.removeEventListener("click", fire);
+            window.removeEventListener("keydown", fire);
+            action();
+        }
+        window.addEventListener("click", fire);
+        window.addEventListener("keydown", fire);
+    }
+
+    // Off-target consoles are not launched automatically -- one tap still runs
+    // it, so a user-agent quirk on the real 13.52 console can never lock it out.
+    if (!supported) {
+        setState("UNSUPPORTED FIRMWARE", "bad");
+        waitForTap("UNSUPPORTED (" + (key || "unknown") + ") -- press X or tap to run anyway", go);
+        return;
+    }
+
+    var ac = window.applicationCache;
+    if (!ac || !document.documentElement.hasAttribute("manifest")) {
+        go();
+    } else if (!navigator.onLine) {
+        setCache("offline -- from cache", true);
+        go();
+    } else if (ac.status === ac.IDLE) {
+        setCache("cached", true);
+        go();
+    } else if (ac.status === ac.UPDATEREADY) {
+        try { ac.swapCache(); } catch (e) {}
+        setCache("update downloaded", true);
+        waitForTap("UPDATE READY -- press X or tap to reload & run",
+                   function () { location.reload(); });
+    } else {
+        setCache("checking cache...");
+        ac.addEventListener("downloading",
+            function () { setCache("caching for offline (first run)..."); }, false);
+        ac.addEventListener("progress", function (e) {
+            if (e && e.total)
+                setCache("caching " + Math.round((e.loaded / e.total) * 100) + "%");
+        }, false);
+        ac.addEventListener("cached", function () {
+            setCache("cached for offline use", true);
+            waitForTap("CACHED (first run) -- press X or tap to run", go);
+        }, false);
+        ac.addEventListener("updateready", function () {
+            try { ac.swapCache(); } catch (e) {}
+            setCache("update downloaded", true);
+            waitForTap("UPDATE READY -- press X or tap to reload & run",
+                       function () { location.reload(); });
+        }, false);
+        ac.addEventListener("noupdate", function () {
+            setCache("cached -- offline ready", true);
+            go();
+        }, false);
+        ac.addEventListener("error", function () {
+            setCache("cache unavailable");
+            waitForTap("CACHE FAILED -- press X or tap to run anyway", go);
+        }, false);
+        ac.addEventListener("obsolete", function () {
+            setCache("cache obsolete");
+            waitForTap("CACHE OBSOLETE -- press X or tap to run", go);
+        }, false);
+    }
+})();
+// ViperClient ambient particles
+try {
+  (function(){
+    var c = document.getElementById("particles"); if(!c || !c.getContext) return;
+    var x = c.getContext("2d"), W, H, P = [];
+    function rs(){ W = c.width = window.innerWidth; H = c.height = window.innerHeight; }
+    window.addEventListener("resize", rs); rs();
+    for (var i=0;i<36;i++) P.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*2+0.6, s:Math.random()*0.6+0.15, o:Math.random()*0.5+0.15});
+    (function tick(){
+      x.clearRect(0,0,W,H);
+      for (var j=0;j<P.length;j++){ var p=P[j]; p.y-=p.s; if(p.y<-5){p.y=H+5;p.x=Math.random()*W;}
+        x.beginPath(); x.arc(p.x,p.y,p.r,0,6.283); x.fillStyle="rgba(0,255,136,"+p.o+")"; x.shadowColor="#00ff88"; x.shadowBlur=8; x.fill(); x.shadowBlur=0; }
+      setTimeout(function(){ if(window.requestAnimationFrame) requestAnimationFrame(tick); else setTimeout(tick,50); },33);
+    })();
+  })();
+} catch(e) {}
+</script>
+</body>
+</html>
