@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" manifest="cache.appcache">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ViperClient</title>
+<style>
+body{margin:0;background:#020806;color:#c9f5db;font:15px/1.5 system-ui,sans-serif;text-align:center}
+#stage{padding:60px 20px 20px}
+#spin{width:60px;height:60px;margin:0 auto;border:4px solid #0a2e1c;border-top-color:#00ff88;border-radius:50%;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+h1{letter-spacing:.15em;margin:20px 0 0}
+p.sub{color:#00ff88;font-size:12px;letter-spacing:.2em;margin:6px 0 0}
+.loadbar{width:80%;max-width:420px;height:8px;margin:20px auto 0;background:#06150d;border:1px solid #00ff88;border-radius:999px;overflow:hidden}
+.loadbar>div{height:100%;width:36%;background:#00ff88}
+.tiny{font-size:11px;color:#4d6a58;margin-top:12px}
+#msg{display:none;max-width:560px;margin:18px auto;padding:12px;border:1px solid #ff6b6b;border-radius:8px;color:#ffb3b3;font-weight:700}
+#state,#out{display:none}
+body.done #spin{display:none}
+body.done .loadbar>div{width:100%}
+body.fail #spin,body.fail .loadbar{display:none}
+body.fail #msg{display:block}
+body.log #stage{display:none}
+body.log #msg{display:none !important}
+body.log #wrap{padding:16px;max-width:860px;margin:0 auto}
+body.log #state{display:block;font-size:18px;font-weight:700;margin-bottom:10px}
+body.log #out{display:block;white-space:pre-wrap;text-align:left;font:12px Consolas,monospace;color:#8ff5b6;background:#020c07;border:1px solid #00ff88;border-radius:8px;padding:12px;max-height:70vh;overflow:auto}
+</style>
+</head>
+<body>
+<div id="stage">
+<div id="spin"></div>
+<h1>VIPERCLIENT</h1>
+<p class="sub">INJECTING &mdash; HOLD TIGHT</p>
+<div class="loadbar"><div></div></div>
+<p class="tiny">DO NOT POWER OFF &bull; ?log=1 FOR VERBOSE</p>
+</div>
+<div id="msg">Restart your console</div>
+<div id="wrap">
+<div id="state"></div>
+<div id="out"></div>
+</div>
+<script type="module">
+import "./jb.js?v=10";
+</script>
+</body>
+</html>
